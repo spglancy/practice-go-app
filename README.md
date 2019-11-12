@@ -96,4 +96,4 @@ go test ./...
 
 ## Credits
 
-Based on [`xesina/golang-echo-realworld-example-app`](https://github.com/xesina/golang-echo-realworld-example-app) on GitHub.
+Based on [`xesina/golang-echo-realworld-example-app`](https://github.com/xesina/golang-echo-realworld-example-app) on GitHub. 
