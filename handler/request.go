@@ -1,76 +1,68 @@
 package handler
 
 import (
+	"golang-starter-pack/model"
+
 	"github.com/gosimple/slug"
 	"github.com/labstack/echo/v4"
-	"golang-starter-pack/model"
 )
 
-type userUpdateRequest struct {
-	User struct {
-		Username string `json:"username"`
-		Email    string `json:"email" validate:"email"`
-		Password string `json:"password"`
-		Bio      string `json:"bio"`
-		Image    string `json:"image"`
-	} `json:"user"`
+type playerUpdateRequest struct {
+	Player struct {
+		Email    string `gorm:"unique_index;not null"`
+		Password string `gorm:"not null"`
+		Name     string `gorm:"unique_index;not null"`
+		Health   int64
+	} `json:"player"`
 }
 
-func newUserUpdateRequest() *userUpdateRequest {
-	return new(userUpdateRequest)
+func newPlayerUpdateRequest() *playerUpdateRequest {
+	return new(playerUpdateRequest)
 }
 
-func (r *userUpdateRequest) populate(u *model.User) {
-	r.User.Username = u.Username
-	r.User.Email = u.Email
-	r.User.Password = u.Password
-	if u.Bio != nil {
-		r.User.Bio = *u.Bio
-	}
-	if u.Image != nil {
-		r.User.Image = *u.Image
-	}
+func (r *playerUpdateRequest) populate(u *model.Player) {
+	r.Player.Name = u.Name
+	r.Player.Email = u.Email
+	r.Player.Password = u.Password
 }
 
-func (r *userUpdateRequest) bind(c echo.Context, u *model.User) error {
+func (r *playerUpdateRequest) bind(c echo.Context, u *model.Player) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	u.Username = r.User.Username
-	u.Email = r.User.Email
-	if r.User.Password != u.Password {
-		h, err := u.HashPassword(r.User.Password)
+	u.Name = r.Player.Name
+	u.Email = r.Player.Email
+	if r.Player.Password != u.Password {
+		h, err := u.HashPassword(r.Player.Password)
 		if err != nil {
 			return err
 		}
 		u.Password = h
 	}
-	u.Bio = &r.User.Bio
-	u.Image = &r.User.Image
 	return nil
 }
 
-type userRegisterRequest struct {
-	User struct {
-		Username string `json:"username" validate:"required"`
+type playerRegisterRequest struct {
+	Player struct {
+		Name     string `json:"name" validate:"required"`
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`
-	} `json:"user"`
+	} `json:"player"`
 }
 
-func (r *userRegisterRequest) bind(c echo.Context, u *model.User) error {
+func (r *playerRegisterRequest) bind(c echo.Context, u *model.Player) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	u.Username = r.User.Username
-	u.Email = r.User.Email
-	h, err := u.HashPassword(r.User.Password)
+	u.Name = r.Player.Name
+	u.Email = r.Player.Email
+	h, err := u.HashPassword(r.Player.Password)
 	if err != nil {
 		return err
 	}
@@ -78,14 +70,14 @@ func (r *userRegisterRequest) bind(c echo.Context, u *model.User) error {
 	return nil
 }
 
-type userLoginRequest struct {
-	User struct {
+type playerLoginRequest struct {
+	Player struct {
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`
-	} `json:"user"`
+	} `json:"player"`
 }
 
-func (r *userLoginRequest) bind(c echo.Context) error {
+func (r *playerLoginRequest) bind(c echo.Context) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
@@ -95,77 +87,55 @@ func (r *userLoginRequest) bind(c echo.Context) error {
 	return nil
 }
 
-type articleCreateRequest struct {
-	Article struct {
-		Title       string   `json:"title" validate:"required"`
-		Description string   `json:"description" validate:"required"`
-		Body        string   `json:"body" validate:"required"`
-		Tags        []string `json:"tagList, omitempty"`
-	} `json:"article"`
+type itemCreateRequest struct {
+	Item struct {
+		Slug    string `gorm:"unique_index;not null"`
+		Title   string `gorm:"not null"`
+		Ammo    int64
+		Damage  int64
+		Healing int64
+	} `json:"item"`
 }
 
-func (r *articleCreateRequest) bind(c echo.Context, a *model.Article) error {
+func (r *itemCreateRequest) bind(c echo.Context, a *model.Item) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	a.Title = r.Article.Title
-	a.Slug = slug.Make(r.Article.Title)
-	a.Description = r.Article.Description
-	a.Body = r.Article.Body
-	if r.Article.Tags != nil {
-		for _, t := range r.Article.Tags {
-			a.Tags = append(a.Tags, model.Tag{Tag: t})
-		}
-	}
+	a.Title = r.Item.Title
+	a.Ammo = r.Item.Ammo
+	a.Damage = r.Item.Damage
+	a.Slug = slug.Make(r.Item.Title)
 	return nil
 }
 
-type articleUpdateRequest struct {
-	Article struct {
-		Title       string   `json:"title"`
-		Description string   `json:"description"`
-		Body        string   `json:"body"`
-		Tags        []string `json:"tagList"`
-	} `json:"article"`
+type itemUpdateRequest struct {
+	Item struct {
+		Slug   string `gorm:"unique_index;not null"`
+		Title  string `gorm:"not null"`
+		Ammo   int64
+		Damage int64
+	} `json:"item"`
 }
 
-func (r *articleUpdateRequest) populate(a *model.Article) {
-	r.Article.Title = a.Title
-	r.Article.Description = a.Description
-	r.Article.Body = a.Body
+func (r *itemUpdateRequest) populate(a *model.Item) {
+	r.Item.Title = a.Title
+	r.Item.Ammo = a.Ammo
+	r.Item.Damage = a.Damage
 }
 
-func (r *articleUpdateRequest) bind(c echo.Context, a *model.Article) error {
+func (r *itemUpdateRequest) bind(c echo.Context, a *model.Item) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	a.Title = r.Article.Title
+	a.Title = r.Item.Title
 	a.Slug = slug.Make(a.Title)
-	a.Description = r.Article.Description
-	a.Body = r.Article.Body
-	return nil
-}
-
-type createCommentRequest struct {
-	Comment struct {
-		Body string `json:"body" validate:"required"`
-	} `json:"comment"`
-}
-
-func (r *createCommentRequest) bind(c echo.Context, cm *model.Comment) error {
-	if err := c.Bind(r); err != nil {
-		return err
-	}
-	if err := c.Validate(r); err != nil {
-		return err
-	}
-	cm.Body = r.Comment.Body
-	cm.UserID = userIDFromToken(c)
+	a.Ammo = r.Item.Ammo
+	a.Damage = r.Item.Damage
 	return nil
 }
